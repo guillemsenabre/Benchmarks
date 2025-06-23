@@ -62,4 +62,4 @@ int main() {
     free(evict);
     return 0;
 }
-
+printf("L1 cache hit latency: %.2f ns/access\n", (end - start) / (L1_SIZE / (double)CACHE_LINE));
