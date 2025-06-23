@@ -11,7 +11,6 @@
 #define SIZE (512) // 4 KiB
 #define ALIGNMENT 512 // 512 B
 #define FREQ 1848 // LicheePi4a freq [MHz]
-#define ITER 100
 
 #define CLOCK CLOCK_MONOTONIC_RAW
 
@@ -27,11 +26,7 @@ int main() {
 	uint64_t start;
 	uint64_t end;
 
-	uint64_t count = 0;
 	uint64_t latency;
-	uint64_t diff;
-	uint64_t bigger;
-	uint64_t smaller;
 	double cycles;
 
 	ssize_t ret_write;
@@ -41,49 +36,24 @@ int main() {
 	
 	if (fd < 0) { perror("open"); return 1; }
 	
-	for (int i = 0; i < ITER; i++) {
-		ret_memalign = posix_memalign(&aligned_memory_ptr, alignment, size);
+	ret_memalign = posix_memalign(&aligned_memory_ptr, alignment, size);
 
-        	if (ret_memalign != 0) { perror("memalign"); return 1;}
+	if (ret_memalign != 0) { perror("memalign"); return 1;}
+	
+	memset(aligned_memory_ptr, 'a', size);
 
-		memset(aligned_memory_ptr, 'a', size);
-		
-		diff = 0;
+	start = get_ns();
+	ret_write = write(fd, aligned_memory_ptr, size);
+	end = get_ns();
 
-		start = get_ns();
-		ret_write = write(fd, aligned_memory_ptr, size);
-		end = get_ns();
-		
-		if (ret_write != size) { perror("write"); return 1;}
-		
-		free(aligned_memory_ptr);
-		
-		diff = (end - start);
-
-		if ( i == 0) {
-			bigger = smaller = diff;
-		}
-
-		else if ( i > 0) {
-			if (diff > bigger) {
-				bigger = diff;
-			} else if ( diff < smaller) {
-				smaller = diff;
-			}
-		}
-
-		count += (end - start);
-		
-		printf("TEST %d: %.2ld ns/access\n", i, diff);
-	}
-
-	latency = count / ITER;
+	latency = end - start;
 	cycles = get_cycles(latency);	
+	
 
 	printf("Disk %d write lat: %.2ld ns/access\n", SIZE, latency);
 	printf("Disk %d write cycles: %.2f cycles/access\n", SIZE, cycles);
-	printf("Disk %d write biggest lat: %.2ld ns/access\n", SIZE, bigger);
-	printf("Disk %d write smallest lat: %.2ld ns/access\n", SIZE, smaller);
+
+	free(aligned_memory_ptr);
 
 	return 0;
 }
