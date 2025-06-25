@@ -10,7 +10,7 @@
 
 #define SIZE (512) // 4 KiB
 #define ALIGNMENT 512 // 512 B
-#define FREQ 1848 // HiFive p550 freq [MHz]
+#define FREQ 1848 //  Machine dependent CPU frequency [MHz]
 #define ITER 100
 
 #define CLOCK CLOCK_MONOTONIC_RAW
