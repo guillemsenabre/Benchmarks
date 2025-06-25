@@ -10,7 +10,7 @@
 
 #define SIZE (512) // 4 KiB
 #define ALIGNMENT 512 // 512 B
-#define FREQ 1848 // LicheePi4a freq [MHz]
+#define FREQ 1848 // HiFive p550 freq [MHz]
 #define ITER 100
 
 #define CLOCK CLOCK_MONOTONIC_RAW
@@ -37,9 +37,13 @@ int main() {
 	ssize_t ret_write;
 	int ret_memalign;
 
-	int fd = open("./files/disk_lat", O_WRONLY | O_CREAT | O_SYNC | O_DIRECT, 0666 );
+	int fd_1 = open("./files/disk_lat", O_WRONLY | O_CREAT | O_SYNC | O_DIRECT, 0666 );
+	FILE *f_ns = fopen("./files/plot_ns", "w" );
+	FILE *f_cycles = fopen("./files/plot_cycles", "w");
 	
-	if (fd < 0) { perror("open"); return 1; }
+	if (fd_1 < 0) { perror("open"); return 1; }
+	if (!f_ns) { perror("fopen"); return 1; }
+	if (!f_cycles) { perror("fopen"); return 1; }
 	
 	for (int i = 0; i < ITER; i++) {
 		ret_memalign = posix_memalign(&aligned_memory_ptr, alignment, size);
@@ -51,7 +55,7 @@ int main() {
 		diff = 0;
 
 		start = get_ns();
-		ret_write = write(fd, aligned_memory_ptr, size);
+		ret_write = write(fd_1, aligned_memory_ptr, size);
 		end = get_ns();
 		
 		if (ret_write != size) { perror("write"); return 1;}
@@ -74,16 +78,20 @@ int main() {
 
 		count += (end - start);
 		
-		printf("TEST %d: %.2ld ns/access\n", i, diff);
+		fprintf(f_ns, "%ld\n", diff);
+		fprintf(f_cycles, "%f\n", get_cycles(diff));
 	}
 
 	latency = count / ITER;
-	cycles = get_cycles(latency);	
+	cycles = get_cycles(latency);
 
-	printf("Disk %d write lat: %.2ld ns/access\n", SIZE, latency);
-	printf("Disk %d write cycles: %.2f cycles/access\n", SIZE, cycles);
+	printf("Disk %d avg write lat: %.2ld ns/access\n", SIZE, latency);
+	printf("Disk %d avg write cycles: %.2f cycles/access\n", SIZE, cycles);
 	printf("Disk %d write biggest lat: %.2ld ns/access\n", SIZE, bigger);
 	printf("Disk %d write smallest lat: %.2ld ns/access\n", SIZE, smaller);
+
+	fclose(f_ns);
+	fclose(f_cycles);
 
 	return 0;
 }
@@ -91,6 +99,7 @@ int main() {
 uint64_t get_ns() {
 	struct timespec ts;
 	clock_gettime(CLOCK, &ts);
+	
 	return (uint64_t)ts.tv_sec * 1000000000ULL + ts.tv_nsec;
 }
 
