@@ -17,12 +17,13 @@
 
 uint64_t get_ns();
 double get_cycles(uint64_t latency);
+int check_args(char **argv, size_t *size); // TODO: Consider passing argc as well in order to improve portability and robustness.
 
 int main(int argc, char *argv[]) {
 	size_t size = SIZE;
 
-	if (argc == 2) {
-		if (sscanf(argv[1], "%zu", &size) != 1) { perror("sscanf"); return 1;}
+	if (argc > 1) {
+		if (check_args(argv, &size) != 0) {return 1;}
 	}
 	
 	void *aligned_memory_ptr;
@@ -112,4 +113,18 @@ double get_cycles(uint64_t latency) {
 	double freq_ghz = (double)FREQ / 1000;
 
 	return (double)latency * freq_ghz;
+}
+
+int check_args(char **argv, size_t *size) {
+	if (sscanf(argv[1], "%zu", size) != 1) {
+                perror("sscanf");
+                return 1;
+        }
+
+        if (*size % (size_t)ALIGNMENT != 0) {
+                fprintf(stderr, "alignment: size must be a multiple of %d\n", ALIGNMENT);
+        	return 1;
+	}
+
+	return 0;
 }
