@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#define SIZE (512) // 4 KiB
+#define SIZE 512 // 512 B
 #define ALIGNMENT 512 // 512 B
 #define FREQ 1848 // Machine dependent CPU frequency [MHz]
 
