@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#define SIZE (512) // 4 KiB
+#define SIZE 512 // Default to 512 Bytes
 #define ALIGNMENT 512 // 512 B
 #define FREQ 1848 //  Machine dependent CPU frequency [MHz]
 #define ITER 100
@@ -18,10 +18,15 @@
 uint64_t get_ns();
 double get_cycles(uint64_t latency);
 
-int main() {	
+int main(int argc, char *argv[]) {
+	size_t size = SIZE;
+
+	if (argc == 2) {
+		if (sscanf(argv[1], "%zu", &size) != 1) { perror("sscanf"); return 1;}
+	}
+	
 	void *aligned_memory_ptr;
 	
-	size_t size = SIZE;
 	size_t alignment = ALIGNMENT;
 
 	uint64_t start;
