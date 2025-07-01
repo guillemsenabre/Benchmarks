@@ -26,7 +26,6 @@ int main(int argc, char *argv[]) {
 		switch (opt) {
 			case 's':
 				if (sscanf(optarg, "%zu", &size) != 1) {perror("sscanf"); return 1;}
-				// if (*size % (size_t)alignment != 0) {fprintf(stderr, "alignment: size must be a multiple of %d\n", ALIGNMENT); return 1;}
 				break;
 			case 'a':
 				if (sscanf(optarg, "%zu", &alignment) != 1) {perror("sscanf"); return 1;}
@@ -134,7 +133,7 @@ double get_cycles(uint64_t latency, uint64_t freq) {
 uint64_t analyse_machine_cpu_freq(void) {
 	struct timespec remaining, request = {0, 100000000};
 	int iter = 3;
-	uint64_t cur_freq[3];
+	uint64_t cur_freq[iter];
 	uint64_t acc = 0;
 
 	for (int i = 0; i < iter; i++) {
