@@ -9,30 +9,42 @@
 #include <string.h>
 #include <inttypes.h>
 
-#define SIZE 512 // Default to 512 Bytes
-#define ALIGNMENT 512 // 512 B
-#define ITER 100
-
 #define CLOCK CLOCK_MONOTONIC_RAW
 
-uint64_t get_ns();
-uint64_t analyse_machine_cpu_freq();
+uint64_t get_ns(void);
+uint64_t analyse_machine_cpu_freq(void);
 double get_cycles(uint64_t latency, uint64_t freq);
-int check_args(char **argv, size_t *size); // TODO: Consider passing argc as well in order to improve portability and robustness.
+void usage(void);
 
 int main(int argc, char *argv[]) {
-	size_t size = SIZE;
+	int iter = 100;
+	int opt;
+	size_t size = 512;
+	size_t alignment = 512;
 
-	if (argc > 1) {
-		if (check_args(argv, &size) != 0) {return 1;}
+	while ((opt = getopt(argc, argv, "s:a:i:")) != -1) {
+		switch (opt) {
+			case 's':
+				if (sscanf(optarg, "%zu", &size) != 1) {perror("sscanf"); return 1;}
+				// if (*size % (size_t)alignment != 0) {fprintf(stderr, "alignment: size must be a multiple of %d\n", ALIGNMENT); return 1;}
+				break;
+			case 'a':
+				if (sscanf(optarg, "%zu", &alignment) != 1) {perror("sscanf"); return 1;}
+				break;
+			case 'i':
+				if (sscanf(optarg, "%d", &iter) != 1) {perror("sscanf"); return 1;}
+				break;
+			default:
+				usage();
+		}
 	}
+
+	if (size % (size_t)alignment != 0) {fprintf(stderr, "alignment: size must be a multiple of %zu\n", alignment); return 1;}
 
 	uint64_t freq = analyse_machine_cpu_freq();
 
 	void *aligned_memory_ptr;
 	
-	size_t alignment = ALIGNMENT;
-
 	uint64_t start;
 	uint64_t end;
 
@@ -54,7 +66,7 @@ int main(int argc, char *argv[]) {
 	if (!f_ns) {perror("fopen"); return 1;}
 	if (!f_cycles) {perror("fopen"); return 1;}
 	
-	for (int i = 0; i < ITER; i++) {
+	for (int i = 0; i < iter; i++) {
 		ret_memalign = posix_memalign(&aligned_memory_ptr, alignment, size);
 
         	if (ret_memalign != 0) {perror("memalign"); return 1;}
@@ -91,13 +103,13 @@ int main(int argc, char *argv[]) {
 		fprintf(f_cycles, "%f\n", get_cycles(diff, freq));
 	}
 
-	latency = count / ITER;
+	latency = count / iter;
 	cycles = get_cycles(latency, freq);
 
-	printf("Disk %d avg write lat: %.2ld ns/access\n", SIZE, latency);
-	printf("Disk %d avg write cycles: %.2f cycles/access\n", SIZE, cycles);
-	printf("Disk %d write biggest lat: %.2ld ns/access\n", SIZE, bigger);
-	printf("Disk %d write smallest lat: %.2ld ns/access\n", SIZE, smaller);
+	printf("Disk %zu avg write lat: %.2ld ns/access\n", size, latency);
+	printf("Disk %zu avg write cycles: %.2f cycles/access\n", size, cycles);
+	printf("Disk %zu write biggest lat: %.2ld ns/access\n", size, bigger);
+	printf("Disk %zu write smallest lat: %.2ld ns/access\n", size, smaller);
 	
 	//fclose(fd_1); TODO: Ok, but why
 	fclose(f_ns);
@@ -106,7 +118,7 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-uint64_t get_ns() {
+uint64_t get_ns(void) {
 	struct timespec ts;
 	clock_gettime(CLOCK, &ts);
 	
@@ -119,21 +131,7 @@ double get_cycles(uint64_t latency, uint64_t freq) {
 	return (double)latency * freq_ghz;
 }
 
-int check_args(char **argv, size_t *size) {
-	if (sscanf(argv[1], "%zu", size) != 1) {
-                perror("sscanf");
-                return 1;
-        }
-
-        if (*size % (size_t)ALIGNMENT != 0) {
-                fprintf(stderr, "alignment: size must be a multiple of %d\n", ALIGNMENT);
-        	return 1;
-	}
-
-	return 0;
-}
-
-uint64_t analyse_machine_cpu_freq() {
+uint64_t analyse_machine_cpu_freq(void) {
 	struct timespec remaining, request = {0, 100000000};
 	int iter = 3;
 	uint64_t cur_freq[3];
@@ -162,3 +160,13 @@ uint64_t analyse_machine_cpu_freq() {
 
 	return cur_freq[0];
 }
+
+void usage(void) {
+    (void)fprintf(stderr,
+        "usage: ./lat_disk [-a <alignment>] [-i <iterations>] [-s <size>]\n"
+        "  -a <alignment>    Set the memory alignment (in bytes)\n"
+        "  -i <iterations>   Number of iterations for the test loop\n"
+        "  -s <size>         Total size of data to process (in bytes)\n");
+    exit(1);
+}
+
