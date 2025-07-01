@@ -11,7 +11,6 @@
 
 #define SIZE 512 // Default to 512 Bytes
 #define ALIGNMENT 512 // 512 B
-/*#define FREQ 1848 //  Machine dependent CPU frequency [MHz]*/
 #define ITER 100
 
 #define CLOCK CLOCK_MONOTONIC_RAW
@@ -155,11 +154,8 @@ uint64_t analyse_machine_cpu_freq() {
 
 	uint64_t avg = acc/iter;
 
-	printf("1: %" PRIu64" 2: %" PRIu64" 3: %" PRIu64"\n", cur_freq[0], cur_freq[1], cur_freq[2]);
-	printf("ACC is %" PRIu64" and first write is %" PRIu64" and AVG is %" PRIu64" DAMN", acc, cur_freq[0], avg);
-
 	if (avg != cur_freq[0]) {
-		printf("Machine has scalable frequency, revising scaling driver...\n");
+		printf("Machine has scalable frequency, revising scaling driver (using %" PRIu64" Hz in the meantime)...\n", cur_freq[0]);
 	} else {
 		printf("Machine has an static frequency of %" PRIu64", continuing...\n", cur_freq[0]);
 	}
