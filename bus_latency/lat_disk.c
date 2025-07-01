@@ -21,6 +21,7 @@ int main(int argc, char *argv[]) {
 	int opt;
 	size_t size = 512;
 	size_t alignment = 512;
+	char device[50] = "./files/test";
 
 	while ((opt = getopt(argc, argv, "s:a:i:")) != -1) {
 		switch (opt) {
@@ -33,6 +34,8 @@ int main(int argc, char *argv[]) {
 			case 'i':
 				if (sscanf(optarg, "%d", &iter) != 1) {perror("sscanf"); return 1;}
 				break;
+			case 'd':
+                                if (sscanf(optarg, "%49s", device) != 1) {perror("sscanf"); return 1;}
 			default:
 				usage();
 		}
@@ -57,7 +60,7 @@ int main(int argc, char *argv[]) {
 	ssize_t ret_write;
 	int ret_memalign;
 	
-	int fd_1 = open("./files/disk_lat", O_WRONLY | O_CREAT | O_SYNC | O_DIRECT, 0666 );
+	int fd_1 = open(device, O_WRONLY | O_CREAT | O_SYNC | O_DIRECT, 0666 );
 	FILE *f_ns = fopen("./files/plot_ns", "w" );
 	FILE *f_cycles = fopen("./files/plot_cycles", "w");
 	
@@ -110,7 +113,7 @@ int main(int argc, char *argv[]) {
 	printf("Disk %zu write biggest lat: %.2ld ns/access\n", size, bigger);
 	printf("Disk %zu write smallest lat: %.2ld ns/access\n", size, smaller);
 	
-	//fclose(fd_1); TODO: Ok, but why
+	fclose(fd_1);
 	fclose(f_ns);
 	fclose(f_cycles);
 
