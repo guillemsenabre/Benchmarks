@@ -165,7 +165,7 @@ void usage(void) {
         "usage: ./lat_disk [-a <alignment>] [-i <iterations>] [-s <size>]\n"
         "  -a <alignment>    Set the memory alignment (in bytes)\n"
         "  -i <iterations>   Number of iterations for the test loop\n"
-        "  -s <size>         Total size of data to process (in bytes)\n");
+        "  -s <size>         Specify the block size (in bytes) to write to disk\n");
     exit(1);
 }
 
