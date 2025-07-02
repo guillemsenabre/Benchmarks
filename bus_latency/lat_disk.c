@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
 	size_t alignment = 512;
 	char device[50] = "./files/test";
 
-	while ((opt = getopt(argc, argv, "s:a:i:")) != -1) {
+	while ((opt = getopt(argc, argv, "s:a:i:d:")) != -1) {
 		switch (opt) {
 			case 's':
 				if (sscanf(optarg, "%zu", &size) != 1) {perror("sscanf"); return 1;}
@@ -36,6 +36,8 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'd':
                                 if (sscanf(optarg, "%49s", device) != 1) {perror("sscanf"); return 1;}
+				printf("Writing to %s\n instead", device);
+				break;
 			default:
 				usage();
 		}
@@ -113,7 +115,7 @@ int main(int argc, char *argv[]) {
 	printf("Disk %zu write biggest lat: %.2ld ns/access\n", size, bigger);
 	printf("Disk %zu write smallest lat: %.2ld ns/access\n", size, smaller);
 	
-	fclose(fd_1);
+	close(fd_1);
 	fclose(f_ns);
 	fclose(f_cycles);
 
@@ -168,7 +170,8 @@ void usage(void) {
         "usage: ./lat_disk [-a <alignment>] [-i <iterations>] [-s <size>]\n"
         "  -a <alignment>    Set the memory alignment (in bytes)\n"
         "  -i <iterations>   Number of iterations for the test loop\n"
-        "  -s <size>         Specify the block size (in bytes) to write to disk\n");
+        "  -s <size>         Specify the block size (in bytes) to write to disk\n"
+    	"  -d <directory>    Specify the directory/device where the file to write in is stored\n");
     exit(1);
 }
 
