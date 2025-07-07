@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import sys
 
+time_units = 'ns'
+
 if len(sys.argv) > 1:
     board_name = sys.argv[1]
     values = int(sys.argv[2])
@@ -9,10 +11,17 @@ if len(sys.argv) > 1:
 
 # Read N values from file
 with open('./files/plot_ns', 'r') as f:
-    write_access_times_ns = [int(line.strip()) for line in f if line.strip()]
+    write_access_times = []
+    for line in f:
+        if line.strip():
+            value = int(line.strip())
+            if value > 10**5:
+                value = round(value / 1e6, 2)
+                time_units = 'ms' # Very inefficient
+            write_access_times.append(value)
 
 with open('./files/plot_cycles', 'r') as f:
-    write_access_times_cycles = [float(line.strip()) for line in f if line.strip()]
+    write_access_times_cycles = [int(round(float(line.strip()))) for line in f if line.strip()]
 
 # Sanity check
 assert len(write_access_times_ns) == values, f"Expected {values} values in ./files/plot"
@@ -41,5 +50,5 @@ import os
 os.makedirs('./plots', exist_ok=True)
 
 # Call function for each dataset
-plot(write_access_times_ns, 'latency_ns', 'ns')
+plot(write_access_times_ns, f'latency_{time_units}', time_units)
 plot(write_access_times_cycles, 'latency_cycles', 'cycles')
